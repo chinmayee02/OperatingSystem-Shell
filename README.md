@@ -1,65 +1,62 @@
 # OperatingSystem-Shell
  create your own shell named 'mini-sh>'
-This assignment helps you learn about processes and basic process management in a shell. You are asked to write a simple shell program called minish. This shell must work as follows. You start the shell by running minish program. This will give a prompt of your shell as follows:
+This assignment helps you learn about processes and basic process management in a shell. You are asked to write a simple shell program called minish. This shell must work as follows. You start the shell by running minish program. 
 
-minish> 
-From here onwards, you should be able to execute and control any program/command just as you would in a normal shell. For instance
-minish> ls 
-[ Output of ls shown here. Your shell waits for ls to finish. ]
-minish> 
+Objectives
 
-Additionally, your shell should be able to do the following:
+Learn how to create and terminate processes.
+Learn about process hierarchy.
+Learning to use system calls fork(), exec(), wait(), getpid(), getppid()
+Practice using command-line arguments and recursion.
 
-Execute commands with multiple arguments. For example:
-minish> Command arg1 arg2 arg3 
-[ Output of Command shown here. Your shell waits for Command to finish. ] 
-minish> 
+Description
+You are being asked to write a program that will recursively create a process hierarchy tree that is H levels deep, print out the process tree information as the tree is being created, and then systematically terminate all the processes in the tree. Here are the detailed requirements:
 
-Execute commands in either foreground or background mode. In foreground mode, the shell just waits for the command to complete before displaying the shell prompt again (as in the above example). In background mode, a command is executed with an ampersand & suffix. The shell prompt appears immediately after typing a command name (say Command1) and shell becomes ready to accept and execute the next command (say Command2), even as Command1 continues executing in the background. For example: 
+Your program should accept two command-line arguments H and C that describe the structure of the process tree. The argument H is the height of the tree and C is the number of child processes belonging to each internal node of the process tree.
+Upon starting up, your program should first print the following information:
+		(pid): Process starting
+		(pid): Parent's id = (ppid)
+		(pid): Height in the tree = (value_of_H_from_command_line_argument)
+		(pid): Creating (value_of_C_from_command_line) children at height (H-1)
+In the above output, you should replace pid by the process id of the current process and ppid by the process id of the parent process.
+Next, if the height H is greater than 1, your program should create C child processes using fork(), and wait for all of the children to complete using the wait() system call.
+Once all the child processes (if any) have terminated, your program should quit by printing.
+		(pid): Terminating at height (H).
+Parent must not quit before ALL child processes terminate. 
+Also, parent must call wait() ONLY AFTER CREATING ALL CHILDREN. (Think why?)
+What should each child process do while the parent waits? Recursion! Each of the child processes should use the exec() system call to run exactly the same program image as the parent. The only difference should be that the command-line argument received by the child proceses from the parent (via the exec() system call) should be H-1 for height and C for number of children. 
+(NOTE: Recursion in this step can also be done without using exec(), via straightforward function calls. But you are REQUIRED to use exec() to start the child program image and pass arguments to it. Learning about exec() is one of the goals of this assignment.)
+Make the output more readable by neatly indenting the print statements above to match height of each process in the process heirarchy. (Do this at the end. Its worth only 5 points, but makes the TA's life easier while grading).
 
-minish> Command1 & 
-minish> Command2 
-[Output of Command1 and Command2 may interleave here in arbitrary order. Your shell waits for Command 2 to finish.] 
-minish> 
-Maintain multiple processes running in background mode simultaneously. For example: 
-minish> Command1 & 
-minish> Command2 & 
-minish> Command3 & 
-minish> 
-[Output of Command1, Command2, and Command3 may interleave here in arbitrary order. Shell does not wait for any of the commands to finish.] 
+Grading Guidelines
+	This is how we will grade your assignment during the demo. So please prioritize your work accordingly.
 
-List all currently running background jobs using "listjobs" command.
-minish> Command1 & 
-minish> Command2 & 
-minish> Command3 & 
-minish> listjobs 
-List of backgrounded processes: 
-Command 1 with PID 1000 Status:RUNNING 
-Command 2 with PID 1005 Status:RUNNING 
-Command 3 with PID 1007 Status:FINISHED 
-minish> 
+	20 - Correctly creating a hierarchy of processes with arbitrary H and C using fork() and exec().
 
-Bring a background process to foreground using the fg command with process ID as argument. For instance, continuing from the previous example: 
-minish> fg 1005 
-[ Your shell waits for Command2 to finish. ] 
-minish> 
+	20 - Correctly terminating the hierarchy for arbitrary H and C using wait()/waitpid().
 
-Terminate a process by pressing [Ctrl-C]. Your shell must not get killed; only the process running inside your shell must terminate. 
-The exit command should terminate your shell. Take care to avoid orphan processes. 
-The cd command must actually change the directory of your shell and the pwd command must return the current directory of your shell. Note that normal fork-exec mechanism won't work here. Why? 
+	10 - Recursion is implemented using exec() (and NOT using usual function calls)
 
-Do Nots:
-DO NOT use any special wrapper libraries or classes to borrow the basic functionality required in this assignment. If in doubt, ask the instructor first BEFORE doing so. 
-DO NOT use the system(...) syscall to execute the programs in your shell directly. 
-DO NOT write five or six different programs, one for each feature. Write one single program that includes all the above features. 
+	10 - Parent process wait()s for child processes ONLY after it creates ALL child processes.
 
-Hints:
-Build and test one functionality at a time. Make backup copies of partially working versions of your code. This way, if you irreparably screw up your code, then you can at least roll back to your last backup copy. First design your data structures and code-structure before you begin coding each feature. Anticipate specific problems you will face. 
+	10 - Parent process does not terminate before ALL child processes terminate.
 
-Check out man page for the following: 
-fork() 
-execv(), execl(), execlp(), execvp() (which one should you use?) 
-waitpid() 
-kill() 
-chdir() 
-getcwd() 
+	10 - Error Handling
+		Most important part here is to make sure that you check and handle the errors 
+		returned by ALL systems calls used in your program. Also check for other common 
+		error conditions in your program. But don't go overboard with error checking. 
+		We will NOT try to intentionally break your code with bad input that's irrelevant 
+		to the assignment's goal.
+
+	5  - Indented formatting for output of processes at different heights in the hierarchy
+
+	5 - Makefile, Compilation without errors, README 
+
+
+	Total points = 90
+
+Hints
+The entire program is likely very small, no more than a few tens of lines of code at most, if you think through it carefully.
+Use manpages to check the usage details of different system calls.
+Do this assignment as a regular user, NOT as root, to avoid corrupting your system accidentally.
+Use the command "kill -9 (pid)" to kill one process. Use "killall (program_name)" to kill all processes starting with a certain name. Use "kill -9 -1" to kill all processes owned by the current user (do this ONLY as a normal user, NEVER as root).
